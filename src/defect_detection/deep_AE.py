@@ -16,7 +16,7 @@ import os
 class AE_cls(torch.nn.Module):
     """
     Class inplementing the deep AE architecture using pyTorch.
-    Provides also methods for training and appalying model using input batches.
+    Provides also methods for training and applying model using input batches.
     """
 
     # Initialization method

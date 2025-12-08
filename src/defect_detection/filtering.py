@@ -26,6 +26,10 @@ def get_pixels(emap, th, dbs_param, pix_th):
     pix = np.argwhere(emap)
     del emap
 
+    # Check for empty selection
+    if pix.shape[0] == 0:
+        return pix
+
     # Initialise DBSCAN with parameters and run clustering
     dbs = DBSCAN(**dbs_param)
     fil = dbs.fit_predict(pix)
