@@ -111,7 +111,7 @@ def load_batch(flist, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)
     imgx, imgy = img.shape[0], img.shape[1]
 
     # Initialize the input array
-    batch = np.empty(size=(flist.size, imgx, imgy, 3), dtype=np.uint8)
+    batch = np.empty((flist.size, imgx, imgy, 3), dtype=np.uint8)
 
     # Put the first image (already loaded) in container
     batch[0] = img
@@ -138,7 +138,7 @@ def load_batch(flist, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)
                 patch.append(cv.cvtColor(cv.imread(str(f)), cv.COLOR_BGR2RGB))
 
         # Loop over batch images
-        for i in batch.shape[0]:
+        for i in range(batch.shape[0]):
             # Loop over npatch
             for _ in range(npatch):
                 # Check if a patch directory is specified
@@ -179,9 +179,15 @@ def load_batch(flist, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)
                     thisp = cv.resize(thisp, (wid[1], wid[0]))
 
                     # Insert noise patch in image
-                    batch_n[i, pos[0] : pos[0] + wid[0], pos[1] : pos[1] + wid[1]][
-                        patch < 250
-                    ] = col
+                    batch_n[i, pos[0] : pos[0] + wid[0], pos[1] : pos[1] + wid[1], 0][
+                        thisp[:, :, 0] < 250
+                    ] = col[0]
+                    batch_n[i, pos[0] : pos[0] + wid[0], pos[1] : pos[1] + wid[1], 1][
+                        thisp[:, :, 1] < 250
+                    ] = col[1]
+                    batch_n[i, pos[0] : pos[0] + wid[0], pos[1] : pos[1] + wid[1], 2][
+                        thisp[:, :, 2] < 250
+                    ] = col[2]
                     del thisp
 
     # Convert batch array into a tensor with the right format
