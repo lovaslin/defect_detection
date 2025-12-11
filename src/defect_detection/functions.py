@@ -91,6 +91,12 @@ def load_batch(flist, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)
             Iterable defining the minimum and maximum size for the noise patches.
             Must be given as an iterable of 2 integers with the format [size_min, size_max].
             Default to (10, 100).
+    Returns :
+        batch :
+            The input batch containing all images in torch tensor format.
+        batch_n : **OPTIONAL**
+            The same input batch with additionnal noise patterns added to the images.
+            Return only if noise patches are required.
     """
 
     # Check for automatic device detection
