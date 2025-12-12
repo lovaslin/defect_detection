@@ -107,18 +107,18 @@ def load_batch(flist, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)
             dev = "cpu"
 
     # Check the first image size
-    img = cv.imread(flist[0])
+    img = cv.cvtColor(cv.imread(flist[0]), cv.COLOR_BGR2RGB)
     imgx, imgy = img.shape[0], img.shape[1]
 
     # Initialize the input array
-    batch = np.empty((flist.size, imgx, imgy, 3), dtype=np.uint8)
+    batch = np.empty((len(flist), imgx, imgy, 3), dtype=np.uint8)
 
     # Put the first image (already loaded) in container
     batch[0] = img
     del img
 
     # Loop over remaining files (if any) and load them
-    if flist.size > 1:
+    if len(flist) > 1:
         for i, f in enumerate(flist[1:]):
             batch[i + 1] = cv.cvtColor(cv.imread(f), cv.COLOR_BGR2RGB)
 
@@ -152,7 +152,12 @@ def load_batch(flist, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)
                     ]
 
                     # Set patch color
-                    col = np.random.randint(40, 230, size=3, dtype=np.uint8)
+                    if np.random.rand() < 0.5:
+                        # Dark color
+                        col = np.random.randint(40, 45, size=3, dtype=np.uint8)
+                    else:
+                        # Light color
+                        col = np.random.randint(235, 240, size=3, dtype=np.uint8)
 
                     # Insert noise patch in image
                     batch_n[i, pos[0] : pos[0] + wid[0], pos[1] : pos[1] + wid[1]] = col
@@ -170,7 +175,12 @@ def load_batch(flist, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)
                     rot = np.random.randint(-1, 3)
 
                     # Set random color
-                    col = np.random.randint(40, 230, size=3, dtype=np.uint8)
+                    if np.random.rand() < 0.5:
+                        # Dark color
+                        col = np.random.randint(40, 45, size=3, dtype=np.uint8)
+                    else:
+                        # Light color
+                        col = np.random.randint(235, 240, size=3, dtype=np.uint8)
 
                     # Process patch p (apply rotation and resize)
                     thisp = patch[pid].copy()
