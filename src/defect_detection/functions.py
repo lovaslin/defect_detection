@@ -62,17 +62,15 @@ def deepAE_load(path, use_only=True, loss_fn=None, opt=None, opt_param=None):
     return ae
 
 
-# Load a batch of images and convert into a tensor on required devaice
-def load_batch(flist, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)):
+# Function to convert numpy array batch into pytorch tensor batch
+def get_tensor(batch, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)):
     """
-    Load a batch of images form a list of file path to a pytorch tensor on the required device.
-    All input images are expected to have identical x and y dimensions.
+    Conver a batch of input image from numpy array format to torch tensor on the required device.
     Optionally, you can also specify if the noising of the input is needed (e.g. for training a new model).
 
     Arguments :
-        flist :
-            The list of input file pathes given as an iterable of strings.
-            The format is [path_1, path_2, ..., path_n].
+        batch :
+            ...
         dev :
             Specify on which device the output tensor must be stored.
             Can be either 'cpu', 'cuda' or 'auto'.
@@ -97,6 +95,9 @@ def load_batch(flist, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)
         batch_n : **OPTIONAL**
             The same input batch with additionnal noise patterns added to the images.
             Return only if noise patches are required.
+
+    See also :
+        load_batch
     """
 
     # Check for automatic device detection
@@ -105,22 +106,6 @@ def load_batch(flist, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)
             dev = "cuda"
         else:
             dev = "cpu"
-
-    # Check the first image size
-    img = cv.cvtColor(cv.imread(flist[0]), cv.COLOR_BGR2RGB)
-    imgx, imgy = img.shape[0], img.shape[1]
-
-    # Initialize the input array
-    batch = np.empty((len(flist), imgx, imgy, 3), dtype=np.uint8)
-
-    # Put the first image (already loaded) in container
-    batch[0] = img
-    del img
-
-    # Loop over remaining files (if any) and load them
-    if len(flist) > 1:
-        for i, f in enumerate(flist[1:]):
-            batch[i + 1] = cv.cvtColor(cv.imread(f), cv.COLOR_BGR2RGB)
 
     # Check if input nosing is required
     if npatch > 0:
@@ -216,3 +201,65 @@ def load_batch(flist, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)
 
     # Return batch in tensor format
     return torch.from_numpy(batch).to(dev)
+
+
+# Load a batch of images and convert into a tensor on required device
+def load_batch(flist, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)):
+    """
+    Load a batch of images form a list of file path to a pytorch tensor on the required device.
+    All input images are expected to have identical x and y dimensions.
+    Optionally, you can also specify if the noising of the input is needed (e.g. for training a new model).
+
+    Arguments :
+        flist :
+            The list of input file pathes given as an iterable of strings.
+            The format is [path_1, path_2, ..., path_n].
+        dev :
+            Specify on which device the output tensor must be stored.
+            Can be either 'cpu', 'cuda' or 'auto'.
+            If set to 'audo', the device is choosen automatically based on Cuda availability.
+            Default to 'auto'.
+        npatch :
+            Integer giving the number of noise patch to be added to the input.
+            If greater than 0, a noisy version of the input batch is also returned.
+            If 0, only the normal input batch is returned.
+            Default to 0.
+        patch_dir :
+            The path to the directory containing the noise pattern images to be used for noising given as a string.
+            If None, random rectangular patterns will be produced.
+            Default to None.
+        patch_size :
+            Iterable defining the minimum and maximum size for the noise patches.
+            Must be given as an iterable of 2 integers with the format [size_min, size_max].
+            Default to (10, 100).
+    Returns :
+        batch :
+            The input batch containing all images in torch tensor format.
+        batch_n : **OPTIONAL**
+            The same input batch with additionnal noise patterns added to the images.
+            Return only if noise patches are required.
+
+    See also :
+        get_tensor
+    """
+
+    # Load the first image and get x/y size
+    img = cv.cvtColor(cv.imread(flist[0]), cv.COLOR_BGR2RGB)
+    imgx, imgy = img.shape[0], img.shape[1]
+
+    # Initialize the input array
+    batch = np.empty((len(flist), imgx, imgy, 3), dtype=np.uint8)
+
+    # Put the first image (already loaded) in container
+    batch[0] = img
+    del img
+
+    # Loop over remaining files (if any) and load them
+    if len(flist) > 1:
+        for i, f in enumerate(flist[1:]):
+            batch[i + 1] = cv.cvtColor(cv.imread(f), cv.COLOR_BGR2RGB)
+
+    # Call get_tensor and return result
+    return get_tensor(
+        batch, dev=dev, npatch=npatch, patch_dir=patch_dir, patch_size=patch_size
+    )
