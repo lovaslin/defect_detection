@@ -7,90 +7,130 @@
 
 import numpy as np
 import cv2 as cv
-import torch
 import os
 from pathlib import Path
 import concurrent.futures as thd
 
 
 def generate_dataset(
-    spath="source",
-    Flist="list.txt",
-    fcrop=None,
+    name,
+    flist,
+    spath,
+    opath,
+    crop=None,
     Naug=5,
     offset=25,
-    da=0.20,
-    db=0.20,
+    da=0.2,
+    db=0.2,
     dw=15,
     Nseg=8,
     size=512,
-    opath="data/",
-    name="data",
     opref="img",
-    Ncore="10",
+    Ncore=4,
     seed=666,
+    shuf=False,
 ):
     """
     Generates a dataset from a list of source images.
     The images ondergo data augmentation and spliting into square tiles.
+    A configuration file with the preprocessing arguments is also generated.
 
     Arguments:
-        spath : (Path or str)
-            Path containing the source images.
-
-        Flist : (Path or str)
-            File containing the list of source image files to be processed.
-
-        fcrop : (Path or str or None)
-            File containing the initial croping information to be applied on source images.
-            If not specifyied, no initial croping is applied.
-            *Optional*
-
-        Naug : (int)
-            Number of source image duplicate generated during augmentation.
-
-        offset : (int)
-            Maximal random cropping offset applied durring augmentation (in pixel).
-
-        da : (float)
-            Maximal random luminosity variation applied durring augmentation.
-
-        db : (float)
-            Maximal random contrast variation applied durring augmentation.
-
-        dw : (int)
-            Random crop scale variation applied durring augmentation (in pixel).
-
-        Nseg : (int)
-            Number of vertical and horizontal split applied for image splitting.
-
-        size : (int)
-            Size in pixel of the generated image tiles.
-            The source image is resized to fit the required size before splitting.
-
-        opath : (Path or str)
-            Path where the dataset is generated
-
         name : (str)
             Name of the dataset.
             Can be used ad ID when working with different dataset.
 
+        flist : (Path or str)
+            File containing the list of source image files to be processed.
+
+        spath : (Path or str)
+            Path containing the source images.
+
+        opath : (Path or str)
+            Path where the dataset is generated
+
+        crop : (iterable or None)
+            Defines the initial cropping information to be applied to the images.
+            In the case there are more than one source directory, cropping mus be provided for all of them.
+            The expected format for N source image directories is the following :
+                crop = [[xmin_1, xmax_1, ymin_1, ymax_1], ..., [xmin_N, xmax_N, ymin_N, ymax_N]]
+            If None, no initial cropping is applied
+            Default to None
+
+        Naug : (int)
+            Number of source image duplicate generated during augmentation.
+            Default to 5
+
+        offset : (int)
+            Maximal random cropping offset applied during augmentation (in pixel).
+            Default to 25
+
+        da : (float or iterable)
+            Amplitude of the contrast variation applied during augmentation.
+            If a float value is given, the amplitude will be [-da, +da].
+            If a length 2 iterable is give, the amplitude will be [da[0], da[1]].
+            Defalt to 0.2
+
+
+        db : (float or iterable)
+            Amplitude of the Luminosity variation applied during augmentation.
+            If a float value is given, the amplitude will be [-da, +da].
+            If a length 2 iterable is give, the amplitude will be [da[0], da[1]].
+            Default to 0.2
+
+        dw : (int)
+            Random crop scale variation applied during augmentation (in pixel).
+            Default to 15
+
+        Nseg : (int)
+            Number of vertical and horizontal split applied for image splitting.
+            Each augmented image will then give Nseg*Nseg tiles.
+            Default to 8
+
+        size : (int)
+            Size in pixel of the generated image tiles.
+            The source image is resized to fit the required size before splitting.
+            Default to 512
+
         opref : (str)
             Prefix used for naming the generated images.
+            Default to "img"
+
 
         Ncore : (int)
             Number of CPU core to use for parallelizing the image generation.
+            Default to 4
 
         seed : (int)
             The seed to be used for numpy random generator (ensure reproducibility).
+            Default to 666
     """
+
+    # Initialize seed
     np.random.seed(seed)
+
+    # Check if da and db are given as floats
+    if type(da) is float:
+        da = [-da, da]
+    if type(db) is float:
+        db = [-db, db]
+
+    # Check if flist is given as a string
+    if type(flist) is str:
+        flist = [flist]
+
+    # Check also the shape of crop (if given)
+    if crop:
+        if np.array(crop).dim == 1:
+            crop = [crop]
 
     # Save preprocessing option in a file
     param = {
+        "name": name,
+        "flist": flist,
         "spath": spath,
-        "Flist": Flist,
-        "fcrop": fcrop,
+        "opath": opath,
+        "crop": crop,
         "Naug": Naug,
         "offset": offset,
         "da": da,
@@ -98,11 +138,10 @@ def generate_dataset(
         "dw": dw,
         "Nseg": Nseg,
         "size": size,
-        "opath": opath,
-        "name": name,
         "opref": opref,
         "Ncore": Ncore,
         "seed": seed,
+        "shuf": shuf,
     }
     with Path.open(Path(param["opath"] + param["name"] + ".txt"), "w") as f:
         print(param, file=f)
@@ -111,55 +150,83 @@ def generate_dataset(
     for k, i in param.items():
         print(f"\t{k} : {i}")
 
-    # Load initial croping if needed
-    if param["fcrop"] is not None:
-        with Path.open(Path(param["fcrop"]), "r") as f:
-            cr = eval(f.read())
-    else:
-        cr = None
-
     # Check if output path directory exists
     opath = param["opath"] + param["name"] + "/"
     if not os.path.exists(opath):
         os.mkdir(opath, 0o755)
 
-    # Get the image list from file
+    # Read source file names from the list(s)
     fl = []
-    with Path.open(Path(param["Flist"])) as f:
-        for li in f.readlines():
-            if li[0] == "#":
-                continue
-            else:
-                fl.append(li.strip())
-    print(f"{len(fl)} images to process")
+    list_idx = []
+    list_len = []
+    for i, fname in enumerate(param["flist"]):
+        # Open and read file i
+        with Path.open(Path(fname)) as f:
+            count = 0
+            for li in f.readlines():
+                if li[0] == "#":
+                    continue
+                else:
+                    fl.append(li.strip())
+                    list_idx.append(i)
+                    count = count + 1
+            list_len.append(count)
+    print(f"\n{len(fl)} images to process from {len(list_len)} source(s)")
 
-    # Load temporarly the first image to get shapes
-    img = cv.imread(param["spath"] + fl[0])
-    sxi, syi = img.shape[0], img.shape[1]
-    del img
+    # Load temporarly the first image(s) of the list(s) to get shapes
+    sxi, syi = [], []
+    for i in np.sumcum(np.array(list_len)):
+        img = cv.imread(param["spath"] + fl[i])
+        sxi.append(img.shape[0])
+        syi.append(img.shape[1])
 
-    # Initialize the augmented dataset container
-    if cr:
-        # Compute margin accounting for croping and offset
-        xmin = max(cr[0], param["offset"] + param["dw"])
-        xmax = min(sxi + cr[1], sxi - param["offset"] - param["dw"])
-        ymin = max(cr[2], param["offset"] + param["dw"])
-        ymax = min(syi + cr[3], syi - param["offset"] - param["dw"])
-    else:
-        # Compute margin accounting for offset only
-        xmin = param["offset"] + param["dw"]
-        xmax = sxi - param["offset"] - param["dw"]
-        ymin = param["offset"] + param["dw"]
-        ymax = syi - param["offset"] - param["dw"]
+    # Apply shuffling if required
+    if param["shuf"]:
+        # Convert to numpy array (for easier shuffling)
+        fl = np.array(fl)
+        list_idx = np.array(list_idx)
 
-    print(
-        f"Image shape before segmentation : ({xmax - xmin}, {ymax - ymin}) (+-{2*param['dw']})"
-    )
+        # Get randomly shuffled indices
+        shuf_id = np.arrange(0, fl.size, dtype=int)
+        shuf_id = np.random.shuffle(shuf_id)
+
+        # Apply shufling using shuffled indices
+        fl = fl[shuf_id]
+        list_idx = list_idx[shuf_id]
+        del shuf_id
+
+    # Comput the x/y size of the augmented images
+    xmin, xmax, ymin, ymax = [], [], [], []
+    for i in len(list_len):
+        if param["crop"]:
+            # Compute margin accounting for croping and offset
+            xmin.append(max(param["crop"][i][0], param["offset"] + param["dw"]))
+            xmax.append(
+                min(
+                    sxi[i] + param["crop"][i][1], sxi[i] - param["offset"] - param["dw"]
+                )
+            )
+            ymin.append(max(param["crop"][i][2], param["offset"] + param["dw"]))
+            ymax.append(
+                min(
+                    syi[i] + param["crop"][i][3], syi[i] - param["offset"] - param["dw"]
+                )
+            )
+        else:
+            # Compute margin accounting for offset only
+            xmin.append(param["offset"] + param["dw"])
+            xmax.append(sxi[i] - param["offset"] - param["dw"])
+            ymin.append(param["offset"] + param["dw"])
+            ymax.append(syi[i] - param["offset"] - param["dw"])
+        print(
+            f"Image shape before segmentation for source {i + 1} : ({xmax[i] - xmin[i]}, {ymax[i] - ymin[i]}) (+-{2*param['dw']})"
+        )
 
     # Function to process one image (augmentation+segmentation)
     # To be parallelized.
     def process_img(i):
         np.random.seed(seed * i)
+        print(f"\tstarting image{i + 1}")
 
         # Compute segment edges
         sx = np.linspace(0, param["size"] * param["Nseg"], param["Nseg"] + 1, dtype=int)
@@ -169,14 +236,14 @@ def generate_dataset(
         for a in range(param["Naug"]):
             # Set random offset for position, brightness and contrast
             offset = np.random.randint(-param["offset"], param["offset"])
-            da = np.random.uniform(1 - param["da"], 1 + param["da"])
-            db = np.random.uniform(-param["db"], param["db"])
+            da = np.random.uniform(param["da"][0], param["da"][1])
+            db = np.random.uniform(param["db"][0], param["db"][1])
             dw = np.random.randint(0, param["dw"])
 
             # Read image in the croped/translated range
             img = cv.imread(param["spath"] + fl[i])[
-                xmin + offset - dw : xmax + offset + dw,
-                ymin + offset - dw : ymax + offset + dw,
+                xmin[list_idx[i]] + offset - dw : xmax[list_idx[i]] + offset + dw,
+                ymin[list_idx[i]] + offset - dw : ymax[list_idx[i]] + offset + dw,
             ]
 
             # Resize image so that it fits with segmentation
@@ -185,7 +252,7 @@ def generate_dataset(
             )
 
             # Apply brightness transformation
-            img = da * img + db
+            img = cv.convertScaleAbs(img, 1 + da, 1 + db)
 
             # Segmentation loop
             iid = param["Naug"] * i + a
@@ -204,7 +271,7 @@ def generate_dataset(
         return
 
     # Inintialize process pool for parallelization
-    print("####PROCESSING IMAGES####")
+    print("\n####PROCESSING IMAGES####")
     with thd.ProcessPoolExecutor(max_workers=param["Ncore"]) as exe:
         # Image loop
         for i in range(len(fl)):
@@ -214,37 +281,3 @@ def generate_dataset(
     print("DONE")
 
     return
-
-
-# Function to convert one numpy image torch tensor format
-def get_tensor(im, dev="auto"):
-    """
-    Get a numpy image and convert it in torch tensor type.
-    Also handles selection of device to be used by torch.
-
-    Arguments :
-        im : (numpy array)
-            The image in numpy array format.
-        dev : (str)
-            Define the device that torch should use to handle the tensor.
-            Support 'CPU', 'cuda' and 'auto'.
-    """
-    # Device automatic selection (if needed)
-    if dev == "auto":
-        # Check for CUDA availability
-        if torch.cuda.is_available():
-            dev = "cuda"
-        else:
-            dev = "cpu"
-
-    # Type conversion (to float image)
-    im = im.astype(np.float32)
-    im = im / 255.0
-
-    # Axis reordering (2->0)
-    im = np.moveaxis(im, 2, 0)
-
-    # Conversion to torch tensor and load in device
-    im = torch.from_numpy(im).to(dev)
-
-    return im
