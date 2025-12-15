@@ -121,7 +121,7 @@ def generate_dataset(
 
     # Check also the shape of crop (if given)
     if crop:
-        if np.array(crop).dim == 1:
+        if np.array(crop).ndim == 1:
             crop = [crop]
 
     # Save preprocessing option in a file
@@ -175,8 +175,15 @@ def generate_dataset(
 
     # Load temporarly the first image(s) of the list(s) to get shapes
     sxi, syi = [], []
-    for i in np.sumcum(np.array(list_len)):
-        img = cv.imread(param["spath"] + fl[i])
+    list_len = np.array(list_len)
+    for i in range(len(list_len)):
+        # Get index of the first imge in list i
+        if i == 0:
+            idx = 0
+        else:
+            idx = np.sum(list_len[:i])
+
+        img = cv.imread(param["spath"] + fl[idx])
         sxi.append(img.shape[0])
         syi.append(img.shape[1])
 
@@ -197,7 +204,7 @@ def generate_dataset(
 
     # Comput the x/y size of the augmented images
     xmin, xmax, ymin, ymax = [], [], [], []
-    for i in len(list_len):
+    for i in range(len(list_len)):
         if param["crop"]:
             # Compute margin accounting for croping and offset
             xmin.append(max(param["crop"][i][0], param["offset"] + param["dw"]))
@@ -223,10 +230,11 @@ def generate_dataset(
         )
 
     # Function to process one image (augmentation+segmentation)
-    # To be parallelized.
+    # To be parallelized (So must be global).
+    global process_img
+
     def process_img(i):
         np.random.seed(seed * i)
-        print(f"\tstarting image{i + 1}")
 
         # Compute segment edges
         sx = np.linspace(0, param["size"] * param["Nseg"], param["Nseg"] + 1, dtype=int)
@@ -259,7 +267,7 @@ def generate_dataset(
             for si in range(sx.size - 1):
                 for sj in range(sy.size - 1):
                     cv.imwrite(
-                        opath + param["opref"] + f"_{iid}_x{si+1}y{sj+1}.jpg",
+                        opath + param["opref"] + f"_{iid + 1}_x{si+1}y{sj+1}.jpg",
                         img[sx[si] : sx[si + 1], sy[sj] : sy[sj + 1]],
                     )
 
@@ -267,6 +275,7 @@ def generate_dataset(
         del img
         del sx
         del sy
+        print(f"\timage{i + 1} OK")
 
         return
 
