@@ -169,7 +169,7 @@ def deepAE_train(
 
     ## Data preparation
 
-    print("Preparing data")
+    print("\nPreparing data")
 
     # Retrive list of input files
     dpath = param["data_dir"] + param["data"] + "/"
@@ -190,10 +190,12 @@ def deepAE_train(
 
     # Check ntrain
     print(f"\tfound {fl.shape[0]} batches of {fl.shape[1]} images")
-    if ntrain > fl.shape[0]:
+    if (ntrain is not None) and (ntrain > fl.shape[0]):
         ntrain = fl.shape[0]
         print("\tWARNING : ntrain is greater than the total number of batch availabe")
         print("\tWARNING : all batches will be use for training (no validation)")
+        ntrain = fl.shape[0]
+    if ntrain is None:
         ntrain = fl.shape[0]
 
     # Initialize model
@@ -256,18 +258,21 @@ def deepAE_train(
                 data = load_batch(fl[b], dev=dev)
 
                 # Get val loss
-                _, loss_val[e, b] = AE.batch_apply(data)
+                _, loss_val[e, b - ntrain] = AE.batch_apply(data)
             AE.train()
 
-        # Free memory again
-        del data
+            # Free memory again
+            del data
 
         # Update scheduler (if needed)
         if param["lr_step"] is not None:
             lrs.step()
 
         # Print epoch mean loss
-        print(f"\tloss = {loss[e].mean():.3g}\tval = {loss_val[e].mean():.3g}")
+        if do_val:
+            print(f"\tloss = {loss[e].mean():.3g}\tval = {loss_val[e].mean():.3g}")
+        else:
+            print(f"\tloss = {loss[e].mean():.3g}")
 
     # Check save dir and save model
     print(f"\nSaving model under '{opath}save/'")
@@ -277,5 +282,5 @@ def deepAE_train(
 
     # Return loss arrays
     if do_val:
-        return [loss, loss_val]
-    return [loss, None]
+        return (loss, loss_val)
+    return (loss, None)
