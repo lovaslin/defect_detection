@@ -270,6 +270,7 @@ def deepAE_train(
         print(f"\tloss = {loss[e].mean():.3g}\tval = {loss_val[e].mean():.3g}")
 
     # Check save dir and save model
+    print(f"\nSaving model under '{opath}save/'")
     if not os.path.exists(opath + "save/"):
         os.mkdir(opath + "save/", 0o755)
     AE.save_model(opath + "save/")
