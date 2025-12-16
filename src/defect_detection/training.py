@@ -5,8 +5,8 @@
 
 import numpy as np
 import torch
-from .deepAE import AE_cls
 import os
+from .deep_AE import AE_cls
 from .functions import load_batch
 
 func_def = torch.nn.MSELoss()
@@ -134,7 +134,7 @@ def deepAE_train(
         "seed": seed,
     }
     print("Training parameter :")
-    for k, i in param.item():
+    for k, i in param.items():
         print(f"\t{k} : {i}")
 
     # Load dataset configuration
@@ -154,7 +154,7 @@ def deepAE_train(
     print(config)
 
     # Check device
-    if config["dev"] == "auto":
+    if param["dev"] == "auto":
         if torch.cuda.is_available():
             dev = "cuda"
             print("Cuda detected : switch to cuda device")
@@ -172,8 +172,8 @@ def deepAE_train(
     print("Preparing data")
 
     # Retrive list of input files
-    dpath = param["data_dir"] + param[data] + "/"
-    os.system(f"ls {dpath} > temp.txt")
+    dpath = param["data_dir"] + param["data"] + "/"
+    os.system(f"ls {dpath}* > temp.txt")
     fl = []
     with open("temp.txt") as f:
         for lin in f.readlines():
