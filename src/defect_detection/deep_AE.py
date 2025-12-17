@@ -23,14 +23,14 @@ class AE_cls(torch.nn.Module):
     def __init__(self, p, apply_only=False, loss_fn=None, opt=None, opt_param=None):
         """
         Arguments :
-            p : dict()
+            p : (dict)
                 Python dict containing all the information about the AE architecture.
 
             apply_only : (bool)
                 Specify if the model is used only for application (default: False).
                 Note that the training method is not usable if set to True.
 
-            loss_fn : (function)
+            loss_fn : (callable or None)
                 The loss function used to train the model.
                 Must be compatible with torch API.
                 If you plan to use event weights, use a loss that returns one value per individual inputs.
@@ -177,6 +177,7 @@ class AE_cls(torch.nn.Module):
             dev : (str)
                 Specify the device to use for this model.
                 Supported values are 'cuda', 'cpu' and 'auto'.
+                If set to 'auto', the device is selected autimatically based on Cuda availability.
         """
         # Check if auto
         if dev == "auto":
@@ -195,6 +196,7 @@ class AE_cls(torch.nn.Module):
     def forward(self, x):
         """
         Return the output of the model given input x.
+        This is for internal use only, please use ae_instance(x) instead.
         """
         return self.decoder(self.encoder(x))
 
@@ -202,16 +204,26 @@ class AE_cls(torch.nn.Module):
     def batch_train(self, x, x_n, w=None):
         """
         Train model on a batch of inputs with the possibility to use input weights.
+        It will not do anything if the model is on apply only mode.
+
         Arguments :
-            x :
+            x : (torch.tensor)
                 Input batch tensor, stored on the same device than the model.
                 Used as target for the loss calculation.
-            x_n :
+
+            x_n : (torch.tensor)
                 Noisy version of the input tensor, stored on the same device than the model.
                 Used as input of the model.
-            w : *optional*
+
+            w : (torch.tensor or None)
                 The input weight tensor, stored on the same device than the model.
-                Default to None (don't use input weight).
+                If None, no weights will be used to compute the loss function.
+                Default to None
+
+        Returns :
+            loss : (numpy.array or None)
+                The value of the loss function computed during the training.
+                If the model is in apply only mode, None will be returned instead.
         """
         # Check if apply_only
         if self.apply_only:
@@ -244,16 +256,21 @@ class AE_cls(torch.nn.Module):
         """
         Apply model on a batch of inputs and return both output and loss values.
         Make sure to set the model in evaluation mode before calling this method.
+
         Arguments :
-            x :
+            x : (torch.tensor)
                 Input tensor on which inference is performed (must be on same device as model).
-            alt_loss_fn : *optional*
-                Alternative loss function to be used for model evaluation (default to None).
+                It should have the shape (nbatch, nchannel, sizex, sizey)
+
+            alt_loss_fn : (callabe or None)
+                Alternative loss function to be used for model evaluation.
                 If None, the default training loss function is used.
+                Default to None
         Returns :
-            y :
+            y : (numpy.array)
                 The output of the model in numpy format.
-            loss :
+
+            loss : (numpy.array)
                 The corresponding loss values in numpy format.
         """
         # Skip gradient computation (not needed for inference)
@@ -273,9 +290,11 @@ class AE_cls(torch.nn.Module):
     def save_model(self, path):
         """
         Save both the model configuration and state in two separate files.
+
         Argument :
-            path :
-                Path to the directory in which save files are created.
+            path : (str)
+                Path to the directory in which save files are created given as a string.
+                If save files with the same names are already present, they will be overwriten.
         """
         # Check if path exits and try to create it if not
         if not os.path.exists(path):
