@@ -10,13 +10,27 @@ def get_pixels(emap, th, dbs_param, pix_th):
     The obtained list is then denoised using the DBSCAN clustering algorithm.
 
     Arguments :
-        emap : the error map associated to the image
-        th : the initial selection threshold
-        dbs_param : dict of additional arguments to be passed to the DBSCAN instance
-        pix_th : The minimum number of pixels required per clusters (None means no requirement)
+        emap : (numpy.array)
+            The error map associated to the image.
+            It should have the shape (img_x, img_y).
+
+        th : (float)
+            The initial selection threshold to be applied on per pixel anomaly score.
+            Only the pixels which score is higher will be selected.
+
+        dbs_param : (dict)
+            Additional arguments to be passed to the DBSCAN instance given as a dict.
+            It should be of the from {'arg1': val1, ..., 'argN': valN}.
+
+        pix_th : (int or None)
+            The minimum number of pixels required per clusters.
+            Anomalous pixel clusters with fewer pixels will be ignored.
+            If None, no minimal cluster size requirement is applied.
 
     Returns :
-        pix : clean list of selected pixels
+        pix : (numpy.array)
+            The list of selected pixels after filtering has been applied.
+            It is geven with the format [[pix_x1, pix_y1], ..., [pix_xN, pix_yN]].
     """
 
     # Get raw selection (set non selected to 0)

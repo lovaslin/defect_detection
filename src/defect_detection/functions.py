@@ -86,27 +86,33 @@ def get_tensor(batch, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)
     Arguments :
         batch : (numpy.array)
             The batch of input images given as a numpy array with shape (nbatch, size_x, size_y, nchannels).
+
         dev : (str)
             Specify on which device the output tensor must be stored.
             Can be either 'cpu', 'cuda' or 'auto'.
             If set to 'audo', the device is choosen automatically based on Cuda availability.
             Default to 'auto'.
+
         npatch : (int)
             Integer giving the number of noise patch to be added to the input.
             If greater than 0, a noisy version of the input batch is also returned.
             If 0, only the normal input batch is returned.
             Default to 0.
+
         patch_dir : (str or None)
             The path to the directory containing the noise pattern images to be used for noising given as a string.
             If None, random rectangular patterns will be produced.
             Default to None.
+
         patch_size : (iterable)
             Iterable defining the minimum and maximum size for the noise patches.
             Must be given as an iterable of 2 integers with the format [size_min, size_max].
             Default to (10, 100).
+
     Returns :
         batch :
             The input batch containing all images in torch tensor format.
+
         batch_n : **OPTIONAL**
             The same input batch with additionnal noise patterns added to the images.
             Return only if noise patches are required.
@@ -229,27 +235,33 @@ def load_batch(flist, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)
         flist : (iterable)
             The list of input file pathes given as an iterable of strings.
             The format is [path_1, path_2, ..., path_n].
+
         dev : (str)
             Specify on which device the output tensor must be stored.
             Can be either 'cpu', 'cuda' or 'auto'.
             If set to 'audo', the device is choosen automatically based on Cuda availability.
             Default to 'auto'
+
         npatch : (int)
             The number of noise patch to be added to the input given as an integer.
             If greater than 0, a noisy version of the input batch is also returned.
             If 0, only the normal input batch is returned.
             Default to 0
+
         patch_dir : (str or None)
             The path to the directory containing the noise pattern images to be used for noising given as a string.
             If None, random rectangular patterns will be produced.
             Default to None.
+
         patch_size : (iterable)
             Iterable defining the minimum and maximum size for the noise patches.
             Must be given as an iterable of 2 integers with the format [size_min, size_max].
             Default to (10, 100)
+
     Returns :
         batch : (torch.tensor)
             The input batch containing all images in torch tensor format.
+
         batch_n : (torch.tensor) **OPTIONAL**
             The same input batch with additionnal noise patterns added to the images.
             Return only if noise patches are required.
