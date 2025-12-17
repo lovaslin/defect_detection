@@ -20,7 +20,9 @@ def emap_sum(x, y):
 
 
 # Load a trained model
-def deepAE_load(path, use_only=True, loss_fn=None, opt=None, opt_param=None):
+def deepAE_load(
+    path, dev="auto", use_only=True, loss_fn=None, opt=None, opt_param=None
+):
     """
     Function to load a trained deepAE model.
 
@@ -29,10 +31,16 @@ def deepAE_load(path, use_only=True, loss_fn=None, opt=None, opt_param=None):
             The path to the directory where the model is stored.
             The folder must contain the hyperparameter file and the trained parameters.
 
+        dev : (str)
+            Specifiy the device where the output tensor should be strored.
+            Can be either 'cuda', 'cpu' or 'auto'.
+            If set to 'audo', the device is choosen automatically based on Cuda availability.
+            Dafault to 'auto'
+
         use_only : (bool)
             Specify if the model is intended for application only.
             If true, the training method cannot be called.
-            Default to True.
+            Default to True
 
         loss_fn : (function)
             The loss function used to train the model.
@@ -53,8 +61,15 @@ def deepAE_load(path, use_only=True, loss_fn=None, opt=None, opt_param=None):
     # Initilize the model
     ae = AE_cls(param, use_only, loss_fn, opt, opt_param)
 
+    # Check device if set to auto
+    if dev == "auto":
+        if torch.cuda.is_available():
+            dev = "cuda"
+        else:
+            dev = "cpu"
+
     # Load trained parameters
-    if torch.cuda.is_available():
+    if dev == "cuda":
         ae.load_state_dict(torch.load(path + "AE_state.save"))
     else:
         ae.load_state_dict(torch.load(path + "AE_state.save", map_location="cpu"))
@@ -69,23 +84,23 @@ def get_tensor(batch, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)
     Optionally, you can also specify if the noising of the input is needed (e.g. for training a new model).
 
     Arguments :
-        batch :
-            ...
-        dev :
+        batch : (numpy.array)
+            The batch of input images given as a numpy array with shape (nbatch, size_x, size_y, nchannels).
+        dev : (str)
             Specify on which device the output tensor must be stored.
             Can be either 'cpu', 'cuda' or 'auto'.
             If set to 'audo', the device is choosen automatically based on Cuda availability.
             Default to 'auto'.
-        npatch :
+        npatch : (int)
             Integer giving the number of noise patch to be added to the input.
             If greater than 0, a noisy version of the input batch is also returned.
             If 0, only the normal input batch is returned.
             Default to 0.
-        patch_dir :
+        patch_dir : (str or None)
             The path to the directory containing the noise pattern images to be used for noising given as a string.
             If None, random rectangular patterns will be produced.
             Default to None.
-        patch_size :
+        patch_size : (iterable)
             Iterable defining the minimum and maximum size for the noise patches.
             Must be given as an iterable of 2 integers with the format [size_min, size_max].
             Default to (10, 100).
