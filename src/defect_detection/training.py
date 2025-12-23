@@ -50,7 +50,7 @@ def deepAE_train(
         data : (str)
             Name of the dataset to be used for training the model
 
-        loss_fn : (collable)
+        loss_fn : (callable)
             The loss function to be used for the training.
             It must be a callable compatible with torch models.
             Defalt to torch.nn.MSELoss()
@@ -124,6 +124,16 @@ def deepAE_train(
         seed : (int)
             The seed to be used for numpy random generator (ensure reproducibility).
             Default to 666
+
+    Returns :
+        loss : (numpy.array)
+            All the loss values computed on the training set given as a numpy array.
+            The shape is {ntrain, batch_size}.
+
+        loss_val : (numpy.array or None)
+            All the loss values computed on the validation set given as a numpy array.
+            The shape is {nval, batch_size}.
+            If validation is not required, None is returned instead.
     """
     ## Initilization
 
