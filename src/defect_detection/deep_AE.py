@@ -34,7 +34,8 @@ class AE_cls(torch.nn.Module):
                 The loss function used to train the model.
                 Must be compatible with torch API.
                 If you plan to use event weights, use a loss that returns one value per individual inputs.
-                Not required if apply_only is set to True.
+                If None, it will default to torch.nn.MSELoss().
+                Default to None
 
             opt : (torch.optim object)
                 Instance of the torch optimizer used to compute gradient and update model parameters.
@@ -159,8 +160,11 @@ class AE_cls(torch.nn.Module):
 
         # Set the loss function and optimiser (if needed)
         self.apply_only = apply_only
-        if not apply_only:
+        if loss_fn is None:
+            self.loss_fn = torch.nn.BCEloss()
+        else:
             self.loss_fn = loss_fn
+        if not apply_only:
             if opt_param is None:
                 opt_param = dict()
             self.opt = opt(self.parameters(), **opt_param)
