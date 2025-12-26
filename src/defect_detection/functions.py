@@ -9,6 +9,11 @@ import cv2 as cv
 import numpy as np
 
 
+# Default loss function for model application
+def loss_def(x, y):
+    return torch.mean(torch.square(x - y), (1, 2, 3))
+
+
 # Error map using mean
 def emap_mean(x, y):
     return torch.mean(torch.square(x - y), (0)).detach().to("cpu").numpy()
@@ -21,10 +26,11 @@ def emap_sum(x, y):
 
 # Load a trained model
 def deepAE_load(
-    path, dev="auto", use_only=True, loss_fn=None, opt=None, opt_param=None
+    path, dev="auto", use_only=True, loss_fn=loss_def, opt=None, opt_param=None
 ):
     """
     Function to load a trained deepAE model.
+    By default, the loaded model is assumed be used for application only.
 
     Arguments :
         path : (Path or str)
@@ -42,17 +48,21 @@ def deepAE_load(
             If true, the training method cannot be called.
             Default to True
 
-        loss_fn : (function)
-            The loss function used to train the model.
+        loss_fn : (callable)
+            The loss function used to train/test the model.
+            It must be compatible with the loss function requirement of pytorch.
             Ignored if use_only is set to True.
+            Default to torch.mean(torch.square(x - y), (1, 2, 3))
 
-        opt : (torch.optim object)
+        opt : (torch.optim or None)
             The optimizer used to trained the model.
             Ignored if use_only is set to True.
+            Default to None
 
-        opt_param : (None or dict)
+        opt_param : (dict or None)
             The parameters to be passed to the optimizer.
             If None, a empty dict is assumed.
+            Default to None
     """
     # Load the model hyperparameter
     with Path.open(Path(path + "AE_config.txt")) as f:
