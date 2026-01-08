@@ -55,7 +55,7 @@ The option to generate a noisy version is also available.
 
 The `defect_detection.deepAE_train` function provides a basic training loop to traina new unsupervised defect detection model.
 It is recommended to use a dataset generated with the `defect_detection.generate_dataset` to perform the training (but not mandatory).
-Note that a file containing the specification of the model structure hiperparameters must be provided.
+Note that a file containing the specification of the model structure hiperparameters must be provided (see specification in [wiki](https://github.com/lovaslin/defect_detection/wiki/Specification)).
 The trained model will be saved on disk and the training and validation loss functions will be returned after completion of the training.
 
 It is also possible write a custom training loop using the built-in `AE_cls.batch_train` method to compute the loss and update model parameters.
