@@ -14,14 +14,75 @@ def loss_def(x, y):
     return torch.mean(torch.square(x - y), (1, 2, 3))
 
 
-# Error map using mean
-def emap_mean(x, y):
-    return torch.mean(torch.square(x - y), (0)).detach().to("cpu").numpy()
+# Generic error map function
+def emap(x, y, op="sum"):
+    """
+    Compute a error map (anomaly score per pixel) between 2 images.
+    The anomaly score is computed either by averaging or summing over the 3 color channels.
+
+    Arguments :
+        x : (numpy.array or torch.Tensor)
+            The first input image given either as a numpy array or torch tensor.
+            If it is a torch tensor, it will be automatically converted to numpy.
+        y : (np.array or torch.Tensor)
+            The second input image given either as a numpy array or torch tensor.
+            If it is a torch tensor, it will be automatically converted to numpy.
+        op : (str)
+            String specifying the operation used to compute the error map
+            Can be either 'sum' or 'mean'.
+            Default to 'sum'
+
+    Returns :
+        emap : (numpy.array)
+            The error map returned as a numpy array.
+    """
+    # Check type of first input and convert to numpy if needed
+    if type(x) is torch.Tensor:
+        # To numpy
+        x = x.detach().to("cpu").numpy()
+
+        # Check axis ordering
+        if x.shape[0] == 3:
+            x = np.moveaxis(x, 0, 2)
+
+    # Same for second input
+    if type(y) is torch.Tensor:
+        # To numpy
+        y = y.detach().to("cpu").numpy()
+
+        # Check axis ordering
+        if y.shape[0] == 3:
+            y = np.moveaxis(y, 0, 2)
+
+    if op == "sum":
+        emap = np.sum((x - y) ** 2, axis=2)
+    else:
+        emap = np.mean((x - y) ** 2, axis=2)
+
+    return emap
 
 
-# Error map using sum
+# Deprecated function for retro-compatibility (DEPRECATED)
 def emap_sum(x, y):
-    return torch.sum(torch.square(x - y), (0)).detach().to("cpu").numpy()
+    """
+    **DEPRECATED**
+    Same as emap(x, y, "sum")
+    """
+    print(
+        "WARNING : function 'emap_sum(x,y)' is deprecated, please use 'emap(x,y,\"sum\")' instead"
+    )
+    return emap(x, y, "sum")
+
+
+def emap_mean(x, y):
+    """
+    **DEPRECATED**
+    Same as emap(x, y, "mean")
+    """
+    print(
+        "WARNING : function 'emap_mean(x,y)' is deprecated, please use 'emap(x,y,\"mean\")' instead"
+    )
+    return emap(x, y, "mean")
 
 
 # Load a trained model

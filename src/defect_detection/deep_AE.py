@@ -270,6 +270,7 @@ class AE_cls(torch.nn.Module):
                 Alternative loss function to be used for model evaluation.
                 If None, the default training loss function is used.
                 Default to None
+
         Returns :
             y : (numpy.array)
                 The output of the model in numpy format.
