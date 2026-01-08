@@ -41,18 +41,20 @@ def emap(x, y, op="sum"):
         # To numpy
         x = x.detach().to("cpu").numpy()
 
-        # Check axis ordering
-        if x.shape[0] == 3:
-            x = np.moveaxis(x, 0, 2)
+    # Check axis ordering of first input
+    if x.shape[0] == 3:
+        # Put feature axis in last position (axis=2)
+        x = np.moveaxis(x, 0, 2)
 
     # Same for second input
     if type(y) is torch.Tensor:
         # To numpy
         y = y.detach().to("cpu").numpy()
 
-        # Check axis ordering
-        if y.shape[0] == 3:
-            y = np.moveaxis(y, 0, 2)
+    # Check axis ordering
+    if y.shape[0] == 3:
+        # Put feature axis in last position (axis=2)
+        y = np.moveaxis(y, 0, 2)
 
     if op == "sum":
         emap = np.sum((x - y) ** 2, axis=2)
