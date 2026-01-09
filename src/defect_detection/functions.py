@@ -21,19 +21,19 @@ def emap(x, y, op="sum"):
     The anomaly score is computed either by averaging or summing over the 3 color channels.
 
     Arguments :
-        x : (numpy.array or torch.Tensor)
+        x : (numpy.ndarray or torch.Tensor)
             The first input image given either as a numpy array or torch tensor.
             If it is a torch tensor, it will be automatically converted to numpy.
-        y : (np.array or torch.Tensor)
+        y : (numpy.ndarray or torch.Tensor)
             The second input image given either as a numpy array or torch tensor.
             If it is a torch tensor, it will be automatically converted to numpy.
         op : (str)
             String specifying the operation used to compute the error map
-            Can be either 'sum' or 'mean'.
-            Default to 'sum'
+            Can be either \"sum\" or \"mean\".
+            Default to \"sum\"
 
     Returns :
-        emap : (numpy.array)
+        emap : (numpy.ndarray)
             The error map returned as a numpy array.
     """
     # Check type of first input and convert to numpy if needed
@@ -68,7 +68,7 @@ def emap(x, y, op="sum"):
 def emap_sum(x, y):
     """
     **DEPRECATED**
-    Same as emap(x, y, "sum")
+    Same as emap(x, y, \"sum\")
     """
     print(
         "WARNING : function 'emap_sum(x,y)' is deprecated, please use 'emap(x,y,\"sum\")' instead"
@@ -79,7 +79,7 @@ def emap_sum(x, y):
 def emap_mean(x, y):
     """
     **DEPRECATED**
-    Same as emap(x, y, "mean")
+    Same as emap(x, y, \"mean\")
     """
     print(
         "WARNING : function 'emap_mean(x,y)' is deprecated, please use 'emap(x,y,\"mean\")' instead"
@@ -157,7 +157,7 @@ def get_tensor(batch, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)
     Optionally, you can also specify if the noising of the input is needed (e.g. for training a new model).
 
     Arguments :
-        batch : (numpy.array)
+        batch : (numpy.ndarray)
             The batch of input images given as a numpy array with shape (nbatch, size_x, size_y, nchannels).
 
         dev : (str)
@@ -185,6 +185,7 @@ def get_tensor(batch, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)
     Returns :
         batch :
             The input batch containing all images in torch tensor format.
+            The output tensor shape is (nbatch, nchannels, sizex, sizey).
 
         batch_n : **OPTIONAL**
             The same input batch with additionnal noise patterns added to the images.
@@ -332,10 +333,10 @@ def load_batch(flist, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)
             Default to (10, 100)
 
     Returns :
-        batch : (torch.tensor)
+        batch : (torch.Tensor)
             The input batch containing all images in torch tensor format.
 
-        batch_n : (torch.tensor) **OPTIONAL**
+        batch_n : (torch.Tensor) **OPTIONAL**
             The same input batch with additionnal noise patterns added to the images.
             Return only if noise patches are required.
 
@@ -363,3 +364,28 @@ def load_batch(flist, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)
     return get_tensor(
         batch, dev=dev, npatch=npatch, patch_dir=patch_dir, patch_size=patch_size
     )
+
+
+# Function to convert a tensor image batch back to numpy array (inverse get_tensor function)
+def get_array(batch):
+    """
+    Convert a batch of images given in torch tensor format back to a numpy array.
+    This is like the inverse of the get_tensor function, except that the images are returned with float type (instead of int8).
+
+    Arguments :
+        batch : (torch.Tensor)
+            The batch of images given in torch.Tensor format.
+            Expected tensor shape is (nbatch, nchannels, sizex, sizey)
+
+    Returns :
+        batch : (numpy.ndarray)
+            The same batch of image converted into numpy array.
+            The output array shape is (nbatch, sizex, sizey, nchannels).
+    """
+    # Convert to numpy
+    batch = batch.detach().to("cpu").numpy()
+
+    # Reorder axis (1 -> 3)
+    batch = np.moveaxis(batch, 1, 3)
+
+    return batch
