@@ -194,7 +194,7 @@ def generate_dataset(
         list_idx = np.array(list_idx)
 
         # Get randomly shuffled indices
-        shuf_id = np.arrange(0, fl.size, dtype=int)
+        shuf_id = np.arange(0, fl.size, dtype=int)
         shuf_id = np.random.shuffle(shuf_id)
 
         # Apply shufling using shuffled indices
