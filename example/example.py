@@ -147,6 +147,6 @@ pix_th = 15
 
 # Call the get_pixel function to cluster anmomalous pixels and select relevant defect candidates
 pix = dd.get_pixels(emap, sel_th, dbs_param, pix_th)
-print(pix.shape)
+print("Number of pixelsin selexcted clusters :", pix.shape[0])
 
 # The final list of selected pixels (pix) can be used to identify potential anomalies (defects) in the input image
