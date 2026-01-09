@@ -133,6 +133,7 @@ def deepAE_load(
 
     # Initilize the model
     ae = AE_cls(param, use_only, loss_fn, opt, opt_param)
+    ae.to_dev(dev)
 
     # Check device if set to auto
     if dev == "auto":
