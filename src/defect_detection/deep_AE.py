@@ -161,10 +161,12 @@ class AE_cls(torch.nn.Module):
         # Set the loss function and optimiser (if needed)
         self.apply_only = apply_only
         if loss_fn is None:
-            self.loss_fn = torch.nn.BCEloss()
+            self.loss_fn = torch.nn.MSEloss()
         else:
             self.loss_fn = loss_fn
-        if not apply_only:
+        if apply_only:
+            self.opt = None
+        else:
             if opt_param is None:
                 opt_param = dict()
             self.opt = opt(self.parameters(), **opt_param)
