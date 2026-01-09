@@ -198,8 +198,8 @@ def generate_dataset(
         shuf_id = np.random.shuffle(shuf_id)
 
         # Apply shufling using shuffled indices
-        fl = fl[shuf_id]
-        list_idx = list_idx[shuf_id]
+        fl = fl[shuf_id][0]
+        list_idx = list_idx[shuf_id][0]
         del shuf_id
 
     # Comput the x/y size of the augmented images
