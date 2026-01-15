@@ -248,7 +248,7 @@ class AE_cls(torch.nn.Module):
                 Default to None
 
         Returns :
-            loss : (numpy.array or None)
+            loss : (numpy.ndarray or None)
                 The value of the loss function computed during the training.
                 If the model is in apply only mode, None will be returned instead.
         """
@@ -295,10 +295,10 @@ class AE_cls(torch.nn.Module):
                 Default to None
 
         Returns :
-            y : (numpy.array)
+            y : (numpy.ndarray)
                 The output of the model in numpy format.
 
-            loss : (numpy.array)
+            loss : (numpy.ndarray)
                 The corresponding loss values in numpy format.
         """
         # Skip gradient computation (not needed for inference)
