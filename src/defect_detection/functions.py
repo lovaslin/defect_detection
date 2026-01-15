@@ -21,10 +21,10 @@ def emap(x, y, op="sum"):
     The anomaly score is computed either by averaging or summing over the 3 color channels.
 
     Arguments :
-        x : (numpy.ndarray or torch.Tensor)
+        x : (numpy.ndarray or torch.tensor)
             The first input image given either as a numpy array or torch tensor.
             If it is a torch tensor, it will be automatically converted to numpy.
-        y : (numpy.ndarray or torch.Tensor)
+        y : (numpy.ndarray or torch.tensor)
             The second input image given either as a numpy array or torch tensor.
             If it is a torch tensor, it will be automatically converted to numpy.
         op : (str)
@@ -184,11 +184,11 @@ def get_tensor(batch, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)
             Default to (10, 100).
 
     Returns :
-        batch :
+        batch : (torch.tensor)
             The input batch containing all images in torch tensor format.
             The output tensor shape is (nbatch, nchannels, sizex, sizey).
 
-        batch_n : **OPTIONAL**
+        batch_n : (torch.tensor)
             The same input batch with additionnal noise patterns added to the images.
             Return only if noise patches are required.
 
@@ -318,7 +318,7 @@ def load_batch(flist, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)
             Default to 'auto'
 
         npatch : (int)
-            The number of noise patch to be added to the input given as an integer.
+            The number of noise patches to be added to the input given as an integer.
             If greater than 0, a noisy version of the input batch is also returned.
             If 0, only the normal input batch is returned.
             Default to 0
@@ -334,10 +334,10 @@ def load_batch(flist, dev="auto", npatch=0, patch_dir=None, patch_size=(10, 100)
             Default to (10, 100)
 
     Returns :
-        batch : (torch.Tensor)
+        batch : (torch.tensor)
             The input batch containing all images in torch tensor format.
 
-        batch_n : (torch.Tensor) **OPTIONAL**
+        batch_n : (torch.tensor)
             The same input batch with additionnal noise patterns added to the images.
             Return only if noise patches are required.
 
@@ -374,7 +374,7 @@ def get_array(batch):
     This is like the inverse of the get_tensor function, except that the images are returned with float type (instead of int8).
 
     Arguments :
-        batch : (torch.Tensor)
+        batch : (torch.tensor)
             The batch of images given in torch.Tensor format.
             Expected tensor shape is (nbatch, nchannels, sizex, sizey)
 

@@ -10,7 +10,7 @@ def get_pixels(emap, th, dbs_param, pix_th):
     The obtained list is then denoised using the DBSCAN clustering algorithm.
 
     Arguments :
-        emap : (numpy.array)
+        emap : (numpy.ndarray)
             The error map associated to the image.
             It should have the shape (img_x, img_y).
 
@@ -28,7 +28,7 @@ def get_pixels(emap, th, dbs_param, pix_th):
             If None, no minimal cluster size requirement is applied.
 
     Returns :
-        pix : (numpy.array)
+        pix : (numpy.ndarray)
             The list of selected pixels after filtering has been applied.
             It is geven with the format [[pix_x1, pix_y1], ..., [pix_xN, pix_yN]].
     """
