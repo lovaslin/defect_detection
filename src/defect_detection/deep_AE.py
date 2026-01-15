@@ -1,11 +1,17 @@
 ##########################################################################
 ## Implementation of the super deep AE class.                           ##
 ## Class members :                                                      ##
+##     encoder : the encoder model                                      ##
+##     decoder : the decoder model                                      ##
 ##     loss_fn : the loss function used for training the model          ##
 ##     opt : the torch optimizer used for gradient and parameter update ##
+##     config : dict of model hyperparameters                           ##
+##     apply_only : bool telling if model is for application only       ##
 ## Class methods :                                                      ##
+##     to_dev : assign the model to a specific device                   ##
 ##     batch_train : perform one training step on a batch of inputs     ##
 ##     batch_apply : perform one evaluation step on a batch of inputs   ##
+##     save_save : save model hyperparameter and trained wight on disk  ##
 ##########################################################################
 
 
@@ -17,6 +23,22 @@ class AE_cls(torch.nn.Module):
     """
     Class inplementing the deep AE architecture using pyTorch.
     Provides also methods for training and applying model using input batches.
+
+    Class methods :
+        __init__
+        to_dev
+        forward
+        batch_train
+        batch_apply
+        save_model
+
+    Class members :
+        encoder
+        decoder
+        apply_only
+        loss_fn
+        opt
+        config
     """
 
     # Initialization method
@@ -43,8 +65,7 @@ class AE_cls(torch.nn.Module):
 
             opt_param : (dict)
                 Python dict containing the additionnal arguments to be passed to the optimizer.
-                If not specify, no argument are given to the optimizer.
-                *Optional*
+                If not specified, no arguments are given to the optimizer.
         """
         super().__init__()
 
