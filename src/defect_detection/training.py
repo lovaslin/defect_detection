@@ -45,7 +45,7 @@ def deepAE_train(
             **If a model with this name already exists, it will be overwriten.**
 
         config : (str)
-            Path (given as a string) to the configuration file containing the model hyperparameter.
+            Path (given as a string) to the configuration file containing the model hyperparameters.
 
         data : (str)
             Name of the dataset to be used for training the model
@@ -82,7 +82,7 @@ def deepAE_train(
             Default to 150
 
         batch_size : (int or None)
-            Size of batch used for training and validation given as an integer.
+            Size of batch used whren training and validating th model given as an integer.
             If None, the optimal batch size is infered from the dataset generation parameter.
             Default to None
 
@@ -112,7 +112,7 @@ def deepAE_train(
             Default to False
 
         lr_step : (int or None)
-            The number of epochs after which the learning rate is reduced given as a string.
+            The number of epochs after which the learning rate is reduced given as an integer.
             If None, the learning rate is kept constant during the training.
             Default to None
 
@@ -126,11 +126,11 @@ def deepAE_train(
             Default to 666
 
     Returns :
-        loss : (numpy.array)
+        loss : (numpy.ndarray)
             All the loss values computed on the training set given as a numpy array.
             The shape is {ntrain, batch_size}.
 
-        loss_val : (numpy.array or None)
+        loss_val : (numpy.ndarray or None)
             All the loss values computed on the validation set given as a numpy array.
             The shape is {nval, batch_size}.
             If validation is not required, None is returned instead.
